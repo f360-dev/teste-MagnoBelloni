@@ -1,5 +1,6 @@
-﻿using F360.Domain.Interfaces;
-using F360.Domain.Interfaces.Repositories;
+﻿using F360.Domain.Dtos.Messages;
+using F360.Domain.Interfaces;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Infrastructure.Configuration;
 using F360.Infrastructure.Database.Configuration;
 using F360.Infrastructure.Database.Repositories;
@@ -15,8 +16,6 @@ namespace F360.Workers.OutboxWorker
         {
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
-                //.Enrich.FromLogContext()
-                //.WriteTo.Console()
                 .CreateLogger();
 
             services.AddSerilog();
@@ -58,6 +57,26 @@ namespace F360.Workers.OutboxWorker
                     {
                         h.Username(rabbitMqSettings.Username);
                         h.Password(rabbitMqSettings.Password);
+                    });
+
+
+                    cfg.Message<JobMessage>(e =>
+                    {
+                        e.SetEntityName("JobMessage");
+                    });
+
+                    cfg.Publish<JobMessage>(p =>
+                    {
+                        p.ExchangeType = "direct";
+                    });
+
+                    cfg.Send<JobMessage>(s =>
+                    {
+                        s.UseRoutingKeyFormatter(context =>
+                        {
+                            var message = context.Message;
+                            return message.Priority.ToString();
+                        });
                     });
 
                     cfg.ConfigureEndpoints(context);

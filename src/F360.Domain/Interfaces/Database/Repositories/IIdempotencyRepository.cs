@@ -1,6 +1,6 @@
 using F360.Domain.Entities;
 
-namespace F360.Domain.Interfaces.Repositories;
+namespace F360.Domain.Interfaces.Database.Repositories;
 
 public interface IIdempotencyRepository
 {

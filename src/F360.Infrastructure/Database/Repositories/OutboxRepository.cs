@@ -1,6 +1,6 @@
 using F360.Domain.Entities;
 using F360.Domain.Enums;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Infrastructure.Database.Configuration;
 using MongoDB.Driver;
 

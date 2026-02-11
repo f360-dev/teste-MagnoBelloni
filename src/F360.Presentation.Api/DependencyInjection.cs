@@ -1,11 +1,9 @@
 ﻿using F360.Application.UseCases;
 using F360.Application.Validators;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Infrastructure.Configuration;
 using F360.Infrastructure.Database.Configuration;
 using F360.Infrastructure.Database.Repositories;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using Serilog;
 using System.Text.Json.Serialization;
 
@@ -57,8 +55,7 @@ namespace F360.Api
 
         public static IServiceCollection AddFluentValidation(this IServiceCollection services)
         {
-            services.AddValidatorsFromAssemblyContaining<CreateJobRequestValidator>();
-            services.AddFluentValidationAutoValidation();
+            services.AddScoped<CreateJobRequestValidator>();
 
             return services;
         }

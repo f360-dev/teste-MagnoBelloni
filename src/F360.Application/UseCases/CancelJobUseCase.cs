@@ -1,6 +1,6 @@
 using F360.Domain.Enums;
 using F360.Domain.Exceptions;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Domain.Interfaces.UseCases;
 
 namespace F360.Application.UseCases;

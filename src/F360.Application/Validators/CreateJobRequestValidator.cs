@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace F360.Application.Validators;
 
-public class CreateJobRequestValidator : AbstractValidator<CreateJobRequest>
+public class CreateJobRequestValidator : CustomValidator<CreateJobRequest>
 {
     public CreateJobRequestValidator()
     {
@@ -11,9 +11,5 @@ public class CreateJobRequestValidator : AbstractValidator<CreateJobRequest>
             .NotEmpty()
             .Matches(@"^\d{5}-?\d{3}$")
             .WithMessage("Invalid CEP format");
-
-        RuleFor(x => x.Priority)
-            .IsInEnum()
-            .WithMessage("Invalid priority");
     }
 }

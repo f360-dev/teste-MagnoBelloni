@@ -1,5 +1,5 @@
 using F360.Domain.Entities;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Infrastructure.Database.Configuration;
 using MongoDB.Driver;
 
@@ -10,6 +10,7 @@ public class JobRepository(MongoDbContext context) : IJobRepository
     public async Task<Job> CreateAsync(Job job, CancellationToken cancellationToken)
     {
         await context.Jobs.InsertOneAsync(job, new InsertOneOptions(), cancellationToken);
+
         return job;
     }
 

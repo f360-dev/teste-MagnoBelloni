@@ -1,12 +1,12 @@
 using F360.Domain.Dtos.Messages;
 using F360.Domain.Enums;
 using F360.Domain.Interfaces;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using System.Text.Json;
 
 namespace F360.Workers.OutboxWorker;
 
-public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider, IOutboxRepository outboxRepository, IMessagePublisher messagePublisher) : BackgroundService
+public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -29,16 +29,17 @@ public class Worker(ILogger<Worker> logger, IServiceProvider serviceProvider, IO
 
     private async Task ProcessOutboxMessagesAsync(CancellationToken cancellationToken)
     {
-        var tasks = Enumerable.Range(0, 10).Select(_ => ProcessSingleMessageAsync(cancellationToken));
+        using var scope = serviceProvider.CreateScope();
+        var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
+        var messagePublisher = scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
+
+        var tasks = Enumerable.Range(0, 10).Select(_ => ProcessSingleMessageAsync(outboxRepository, messagePublisher, cancellationToken));
+
         await Task.WhenAll(tasks);
     }
 
-    private async Task ProcessSingleMessageAsync(CancellationToken cancellationToken)
+    private async Task ProcessSingleMessageAsync(IOutboxRepository outboxRepository, IMessagePublisher messagePublisher, CancellationToken cancellationToken)
     {
-        //using var scope = serviceProvider.CreateScope();
-        //var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
-        //var messagePublisher = scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
-
         var outboxMessage = await outboxRepository.GetAndLockNextPendingMessageAsync(cancellationToken);
 
         if (outboxMessage == null)

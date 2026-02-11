@@ -1,11 +1,13 @@
 using F360.Application.DTOs.Requests;
+using F360.Application.Validators;
 using F360.Domain.Dtos.Messages;
 using F360.Domain.Dtos.Responses;
 using F360.Domain.Entities;
 using F360.Domain.Enums;
 using F360.Domain.Exceptions;
-using F360.Domain.Interfaces.Repositories;
+using F360.Domain.Interfaces.Database.Repositories;
 using F360.Domain.Interfaces.UseCases;
+using FluentValidation;
 using System.Text.Json;
 
 namespace F360.Application.UseCases;
@@ -13,10 +15,13 @@ namespace F360.Application.UseCases;
 public class CreateJobUseCase(
     IJobRepository jobRepository,
     IOutboxRepository outboxRepository,
-    IIdempotencyRepository idempotencyRepository) : ICreateJobUseCase
+    IIdempotencyRepository idempotencyRepository,
+    CreateJobRequestValidator createJobRequestValidator) : ICreateJobUseCase
 {
     public async Task<CreateJobResponse> ExecuteAsync(CreateJobRequest request, string idempotencyKey, CancellationToken cancellationToken)
     {
+        createJobRequestValidator.ValidateAndThrow(request);
+
         var existingRecord = await idempotencyRepository.GetByKeyAsync(idempotencyKey, cancellationToken);
         if (existingRecord != null)
         {
@@ -33,8 +38,6 @@ public class CreateJobUseCase(
             CreatedAt = DateTime.UtcNow
         };
 
-        await jobRepository.CreateAsync(job, cancellationToken);
-
         var idempotencyRecord = new IdempotencyKey
         {
             Key = idempotencyKey,
@@ -42,7 +45,16 @@ public class CreateJobUseCase(
             CreatedAt = DateTime.UtcNow
         };
 
-        await idempotencyRepository.CreateAsync(idempotencyRecord, cancellationToken);
+        try
+        {
+            await idempotencyRepository.CreateAsync(idempotencyRecord, cancellationToken);
+        }
+        catch (Exception ex) when (ex.Message.Contains("DuplicateKey"))
+        {
+            throw new ConflictException("Duplicate request detected");
+        }
+        
+        await jobRepository.CreateAsync(job, cancellationToken);
 
         var message = new JobMessage
         {

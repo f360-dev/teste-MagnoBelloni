@@ -20,6 +20,7 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<ApiKeyMiddleware>();
 
